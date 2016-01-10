@@ -36,8 +36,10 @@ int main(int argc, char* args[])
 	Setup();
 	Ball ball1 = Ball(0, 0, 10, windowWidth, windowHeight, 5, 1);
 	Ball ball2 = Ball(640, 0, 20, windowWidth, windowHeight, -5, 1);
+	Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0, 10);
 	balls.push_back(ball1);
 	balls.push_back(ball2);
+	balls.push_back(ball3);
 
 	while (!quit)
 	{

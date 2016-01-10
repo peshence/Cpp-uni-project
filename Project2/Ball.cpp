@@ -39,7 +39,7 @@ void Ball::Move(list<Ball>* balls)
 
 	for (list<Ball>::iterator i = balls->begin(); i != balls->end(); i++)
 	{
-		if(&*i!=this) Collide(&*i);
+		if (&*i != this) Collide(&*i);
 	}
 }
 
@@ -112,14 +112,14 @@ void Ball::Collide(Ball* ball1, Ball* ball2)
 	double distance = sqrt(abs(pow((((*ball1).x) - (*ball2).x), 2) + pow((((*ball1).y) - (*ball2).y), 2)));
 	double overlap = ((*ball1).r + (*ball2).r) - distance;
 
-	if (overlap>=0)
+	if (overlap >= 0)
 	{
-		double phi = atan((double)((*ball1).y - (*ball2).y) / (double)((*ball1).x - (*ball2).x));
+		double phi = ((*ball1).x - (*ball2).x)!=0 ? atan(((*ball1).y - (*ball2).y) / ((*ball1).x - (*ball2).x)) : 1;
 
 		// convert to tangent and normal components of velocity
 		double vt1 = ((*ball1).v_x*sin(phi) + (*ball1).v_y*cos(phi));
 		double vn1 = ((*ball1).v_x*cos(phi) + (*ball1).v_y*sin(phi));
-		
+
 		double vt2 = ((*ball2).v_x*sin(phi) + (*ball2).v_y*cos(phi));
 		double vn2 = ((*ball2).v_x*cos(phi) + (*ball2).v_y*sin(phi));
 
@@ -129,32 +129,32 @@ void Ball::Collide(Ball* ball1, Ball* ball2)
 
 
 		//balls shouldn't overlap
-		ball1->x -= 2*overlap*cos(phi)*ball1->v_x / abs(ball1->v_x);
-		ball1->y -= 2*overlap*sin(phi)*ball1->v_y / abs(ball1->v_y);
+		ball1->x -= ball1->v_x != 0 ? 2 * overlap*cos(phi)*(ball1->v_x) / abs(ball1->v_x) : 0;
+		ball1->y -= ball1->v_y != 0 ? 2 * overlap*sin(phi)*(ball1->v_y) / abs(ball1->v_y) : 0;
 
 
 		//convert back to (x,y) components of velocity
 		ball1->v_x = (_vn1*cos(phi) + vt1*sin(phi));
 		ball1->v_y = (_vn1*sin(phi) + vt1*cos(phi));
-					 
+
 		ball2->v_x = (_vn2*cos(phi) + vt2*sin(phi));
 		ball2->v_y = (_vn2*sin(phi) + vt2*cos(phi));
 	}
 }
 bool Ball::CollideWithWall(double *x, double r, double *v_x, double windowSizex)
 {
-	double tempx = *x + r*(*v_x) / abs(*v_x);
+	double tempx = *v_x != 0 ? *x + r*(*v_x) / abs(*v_x) : *x;
 
 
 	if (tempx >= windowSizex)
-		*x -= 2*(tempx-windowSizex);
+		*x -= 2 * (tempx - windowSizex);
 
 	else if (tempx <= 0)
 		*x += 2 * tempx;
 
 	else
 		return false;
-	
+
 
 	*v_x = -*v_x;
 	return true;
