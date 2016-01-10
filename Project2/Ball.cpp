@@ -2,7 +2,10 @@
 #include <SDL.h>
 #include <iostream>
 #include <list>
+#include <ctime>
+
 using namespace std;
+
 Ball::Ball()
 {
 }
@@ -24,6 +27,14 @@ Ball::Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy)
 	this->windowSizey = wsy;
 	this->v_x = vx;
 	this->v_y = vy;
+	c1 = rand() % 255;
+	c1Amp = rand() % 250;
+	c2 = rand() % 255;
+	c2Amp = rand() % 250;
+	c3 = rand() % 255;
+	c3Amp = rand() % 250;
+	alpha = rand() % 255;
+	start = clock();
 }
 
 
@@ -74,8 +85,15 @@ int Ball::Mass()
 ///<param name="y">y coordinate of center</param>
 ///<param name="r">radius</param>
 ///<param name="renderer">SDL renderer</param>
-void Ball::Render(double x, double y, double r, SDL_Renderer* renderer)
+//void Ball::Render(double x, double y, double r, SDL_Renderer* renderer)
+void Ball::Render(SDL_Renderer* renderer)
 {
+	c1 = 255 * (sin((clock() - start) / c1Amp) + 1) / 2;
+	c2 = 255 * (sin((clock() - start) / c2Amp) + 1) / 2;
+	c3 = 255 * (sin((clock() - start) / c3Amp) + 1) / 2;
+	alpha += sin((clock() - start) / 150);
+	SDL_SetRenderDrawColor(renderer, c1, c2, c3, alpha);
+
 	double tx = r;
 	double ty = 0;
 	double tr = pow(r, 2);

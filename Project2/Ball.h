@@ -10,11 +10,11 @@ public:
 	~Ball();
 	void Move();
 	void Move(list<Ball> *balls);
-	void Render(SDL_Renderer* renderer)	{ Render(x, y, r, renderer); }
+	void Render(SDL_Renderer* renderer);// { Render(x, y, r, renderer); }
 	void Collide(Ball *ball);
 	void CollideWithWall();
 	int Mass();
-	static void Render(double x, double y, double r, SDL_Renderer* renderer);
+	//static void Render(double x, double y, double r, SDL_Renderer* renderer);
 	static void Collide(Ball* ball1, Ball* ball2);
 	static bool CollideWithWall(double *x, double r, double *v_x, double wsx);
 private:
@@ -27,5 +27,15 @@ private:
 	int windowSizey = 480;
 
 	double r;
+
+
+	int c1;
+	int c1Amp;
+	int c2;
+	int c2Amp;
+	int c3;
+	int c3Amp;
+	int alpha;
+	double start;
 };
 

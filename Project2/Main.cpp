@@ -20,15 +20,7 @@ SDL_Renderer* renderer = NULL;
 SDL_Event e;
 
 list<Ball> balls;
-int c1;
-int c1Amp;
-int c2;
-int c2Amp;
-int c3;
-int c3Amp;
-int alpha;
 bool quit;
-double start;
 
 
 int main(int argc, char* args[])
@@ -68,15 +60,7 @@ void Setup()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_CreateWindowAndRenderer(windowWidth, windowHeight, SDL_WINDOW_SHOWN, &window, &renderer);
-	c1 = rand() % 255;
-	c1Amp = rand() % 250;
-	c2 = rand() % 255;
-	c2Amp = rand() % 250;
-	c3 = rand() % 255;
-	c3Amp = rand() % 250;
-	alpha = rand() % 255;
 	quit = false;
-	start = clock();
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 	SDL_RenderPresent(renderer);
@@ -86,11 +70,6 @@ void DrawBalls()
 {
 	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
 	{
-		c1 = 255 * (sin((clock() - start) / c1Amp) + 1) / 2;
-		c2 = 255 * (sin((clock() - start) / c2Amp) + 1) / 2;
-		c3 = 255 * (sin((clock() - start) / c3Amp) + 1) / 2;
-		alpha += sin((clock() - start) / 150);
-		SDL_SetRenderDrawColor(renderer, c1, c2, c3, alpha);
 		(*ball).Render(renderer);
 		SDL_RenderPresent(renderer);
 	}
