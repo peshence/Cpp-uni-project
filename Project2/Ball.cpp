@@ -35,17 +35,11 @@ void Ball::Move(list<Ball>* balls)
 {
 	x += v_x;
 	y += v_y;
-	int tempx = x + r*v_x / abs(v_x);
-	int tempy = y + r*v_y / abs(v_y);
-	if (tempx >= windowSizex || tempx <= 0)
+	CollideWithWall();
+
+	for (list<Ball>::iterator i = balls->begin(); i != balls->end(); i++)
 	{
-		x = x > r ? windowSizex - r : r;
-		v_x = -v_x;
-	}
-	if (tempy >= windowSizey || tempy <= 0)
-	{
-		y = y > r ? windowSizey - r : r;
-		v_y = -v_y;
+		if(&*i!=this) Collide(&*i);
 	}
 }
 
@@ -54,25 +48,19 @@ void Ball::Move()
 {
 	x += v_x;
 	y += v_y;
-	int tempx = x + r*v_x / abs(v_x);
-	int tempy = y + r*v_y / abs(v_y);
-	if (tempx >= windowSizex || tempx <= 0)
-	{
-		x = x > r ? windowSizex - r : r;
-		v_x = -v_x;
-	}
-	if (tempy >= windowSizey || tempy <= 0)
-	{
-		y = y > r ? windowSizey - r : r;
-		v_y = -v_y;
-	}
+	CollideWithWall();
 }
 
 
 void Ball::Collide(Ball * ball)
 {
 	Collide(this, ball);
+}
 
+void Ball::CollideWithWall()
+{
+	CollideWithWall(&x, r, &v_x, windowSizex);
+	CollideWithWall(&y, r, &v_y, windowSizey);
 }
 
 int Ball::Mass()
@@ -141,8 +129,8 @@ void Ball::Collide(Ball* ball1, Ball* ball2)
 
 
 		//balls shouldn't overlap
-		ball1->x -= overlap*cos(phi)*ball1->v_x / abs(ball1->v_x);
-		ball1->y -= overlap*sin(phi)*ball1->v_y / abs(ball1->v_y);
+		ball1->x -= 2*overlap*cos(phi)*ball1->v_x / abs(ball1->v_x);
+		ball1->y -= 2*overlap*sin(phi)*ball1->v_y / abs(ball1->v_y);
 
 
 		//convert back to (x,y) components of velocity
@@ -152,6 +140,24 @@ void Ball::Collide(Ball* ball1, Ball* ball2)
 		ball2->v_x = (_vn2*cos(phi) + vt2*sin(phi));
 		ball2->v_y = (_vn2*sin(phi) + vt2*cos(phi));
 	}
+}
+bool Ball::CollideWithWall(double *x, double r, double *v_x, double windowSizex)
+{
+	double tempx = *x + r*(*v_x) / abs(*v_x);
+
+
+	if (tempx >= windowSizex)
+		*x -= 2*(tempx-windowSizex);
+
+	else if (tempx <= 0)
+		*x += 2 * tempx;
+
+	else
+		return false;
+	
+
+	*v_x = -*v_x;
+	return true;
 }
 //
 //void Ball::Render(int x, int y, double r, SDL_Renderer* renderer)

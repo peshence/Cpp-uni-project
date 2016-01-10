@@ -98,12 +98,12 @@ void MoveBalls()
 {
 	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
 	{
-		(*ball).Move();
-		for (list<Ball>::iterator ball2 = ball; ball2 != balls.end(); ball2++)
+		(*ball).Move(&balls);
+		/*for (list<Ball>::iterator ball2 = ball; ball2 != balls.end(); ball2++)
 		{
 			if (ball != ball2)
 				Ball::Collide(&(*ball), &(*ball2));
-		}
+		}*/
 	}
 }
 
