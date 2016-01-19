@@ -52,6 +52,13 @@ void Ball::Move(list<Ball>* balls)
 	{
 		if (&*i != this) Collide(&*i);
 	}
+
+	int i;
+	if (x < 0 || y < 0 || x>640 || y>480)
+	{
+		cout << "error";
+		cin >> i;
+	}
 }
 
 
@@ -168,7 +175,7 @@ bool Ball::CollideWithWall(double *x, double r, double *v_x, double windowSizex)
 		*x -= 2 * (tempx - windowSizex);
 
 	else if (tempx <= 0)
-		*x += 2 * tempx;
+		*x -= 2 * tempx;
 
 	else
 		return false;

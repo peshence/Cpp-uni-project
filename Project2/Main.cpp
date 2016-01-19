@@ -24,7 +24,7 @@ bool quit;
 
 
 int main(int argc, char* args[])
-{	
+{
 	Setup();
 	Ball ball1 = Ball(0, 0, 10, windowWidth, windowHeight, 5, 1);
 	Ball ball2 = Ball(640, 0, 20, windowWidth, windowHeight, -5, 1);
@@ -32,19 +32,30 @@ int main(int argc, char* args[])
 	balls.push_back(ball1);
 	balls.push_back(ball2);
 	balls.push_back(ball3);
+	int loopperiod = 10;
 
 	while (!quit)
 	{
 		while (SDL_PollEvent(&e) != 0)
 		{
-			if (e.type == SDL_QUIT)
+			switch (e.type)
+			{
+			case SDL_QUIT:
 				quit = true;
+				break;
+
+			case SDL_MOUSEWHEEL:
+				loopperiod += e.wheel.y;
+				if (loopperiod < 0)
+					loopperiod = 0;
+				break;
+			}
 		}
 
 		DrawBalls();
 
 		//makes sure drawn screen is visible to human eye and slows down movements
-		SDL_Delay(10);
+		SDL_Delay(loopperiod);
 
 		MoveBalls();
 
