@@ -6,17 +6,18 @@ class Ball
 {
 public:
 	Ball();
-	Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy);
+	Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed);
 	~Ball();
-	void Move();
 	void Move(list<Ball> *balls);
 	void Render(SDL_Renderer* renderer);// { Render(x, y, r, renderer); }
 	void Collide(Ball *ball);
 	void CollideWithWall();
 	int Mass();
+	double Energy();
 	//static void Render(double x, double y, double r, SDL_Renderer* renderer);
-	static void Collide(Ball* ball1, Ball* ball2);
-	static bool CollideWithWall(double *x, double r, double *v_x, double wsx);
+	static void Collide(Ball* movingBall, Ball* stationaryBall);
+	static bool CollideWithWall(double *x_i, double r, double *v_i, double windowSizei);
+	double* speed;
 private:
 	double x = 0;
 	double y = 0;

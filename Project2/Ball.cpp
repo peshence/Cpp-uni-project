@@ -18,7 +18,8 @@ Ball::Ball()
 ///<param name="wsy">window height</param>
 ///<param name="vx">horizontal speed</param>
 ///<param name="vy">vertical speed</param>
-Ball::Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy)
+///<param name="speed">controls the magnitude of the ball's velocity</param>
+Ball::Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed)
 {
 	this->x = x;
 	this->y = y;
@@ -28,13 +29,14 @@ Ball::Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy)
 	this->v_x = vx;
 	this->v_y = vy;
 	c1 = rand() % 255;
-	c1Amp = rand() % 250;
+	c1Amp = rand() % 250 + 200;
 	c2 = rand() % 255;
-	c2Amp = rand() % 250;
+	c2Amp = rand() % 250 + 200;
 	c3 = rand() % 255;
-	c3Amp = rand() % 250;
-	alpha = rand() % 255;
+	c3Amp = rand() % 250 + 200;
+	alpha = 255;
 	start = clock();
+	this->speed = speed;
 }
 
 
@@ -44,8 +46,8 @@ Ball::~Ball()
 
 void Ball::Move(list<Ball>* balls)
 {
-	x += v_x;
-	y += v_y;
+	x += v_x*(*speed);
+	y += v_y*(*speed);
 	CollideWithWall();
 
 	for (list<Ball>::iterator i = balls->begin(); i != balls->end(); i++)
@@ -60,15 +62,6 @@ void Ball::Move(list<Ball>* balls)
 		cin >> i;
 	}
 }
-
-
-void Ball::Move()
-{
-	x += v_x;
-	y += v_y;
-	CollideWithWall();
-}
-
 
 void Ball::Collide(Ball * ball)
 {
@@ -86,6 +79,11 @@ int Ball::Mass()
 	return M_PI*pow(r, 2);
 }
 
+double Ball::Energy()
+{
+	return Mass()*(pow(v_x,2)+pow(v_y,2))/2;
+}
+
 
 ///<summary>Draws a circle (lengths are in pixels)</summary>
 ///<param name="x">x coordinate of center</param>
@@ -95,10 +93,10 @@ int Ball::Mass()
 //void Ball::Render(double x, double y, double r, SDL_Renderer* renderer)
 void Ball::Render(SDL_Renderer* renderer)
 {
-	c1 = 255 * (sin((clock() - start) / c1Amp) + 1) / 2;
-	c2 = 255 * (sin((clock() - start) / c2Amp) + 1) / 2;
-	c3 = 255 * (sin((clock() - start) / c3Amp) + 1) / 2;
-	alpha += sin((clock() - start) / 150);
+	c1 = 200 * (sin((clock() - start) / c1Amp) + 1) / 2;
+	c2 = 200 * (sin((clock() - start) / c2Amp) + 1) / 2;
+	c3 = 200 * (sin((clock() - start) / c3Amp) + 1) / 2;
+	//alpha = sin((clock() - start));
 	SDL_SetRenderDrawColor(renderer, c1, c2, c3, alpha);
 
 	double tx = r;
@@ -134,54 +132,65 @@ void Ball::Render(SDL_Renderer* renderer)
 
 void Ball::Collide(Ball* ball1, Ball* ball2)
 {
-	double distance = sqrt(abs(pow((((*ball1).x) - (*ball2).x), 2) + pow((((*ball1).y) - (*ball2).y), 2)));
-	double overlap = ((*ball1).r + (*ball2).r) - distance;
+	double distance = sqrt(abs(pow((ball1->x - ball2->x), 2) + pow((ball1->y - ball2->y), 2)));
+	double overlap = (ball1->r + ball2->r) - distance;
+	int t = 0;
+	double energy = ball1->Energy() + ball2->Energy();
 
 	if (overlap >= 0)
 	{
-		double phi = ((*ball1).x - (*ball2).x)!=0 ? atan(((*ball1).y - (*ball2).y) / ((*ball1).x - (*ball2).x)) : 1;
+		//balls shouldn't overlap
+		while (overlap > 0)
+		{
+			ball1->x -= ball1->v_x != 0 ? ball1->v_x / abs(ball1->v_x) : 0;
+			ball1->y -= ball1->v_y != 0 ? ball1->v_y / abs(ball1->v_y) : 0;
+			t++;
+			distance = sqrt(abs(pow(((ball1->x) - ball2->x), 2) + pow(((ball1->y) - ball2->y), 2)));
+			overlap = (ball1->r + ball2->r) - distance;
+		}
+
+		double phi = (ball1->x - ball2->x) != 0 ? atan((ball1->y - ball2->y) / (ball1->x - ball2->x)) : 1;
 
 		// convert to tangent and normal components of velocity
-		double vt1 = ((*ball1).v_x*sin(phi) + (*ball1).v_y*cos(phi));
-		double vn1 = ((*ball1).v_x*cos(phi) + (*ball1).v_y*sin(phi));
+		double vt1 = (ball1->v_x*sin(phi) + ball1->v_y*cos(phi));
+		double vn1 = (-ball1->v_x*cos(phi) + ball1->v_y*sin(phi));
 
-		double vt2 = ((*ball2).v_x*sin(phi) + (*ball2).v_y*cos(phi));
-		double vn2 = ((*ball2).v_x*cos(phi) + (*ball2).v_y*sin(phi));
+		double vt2 = (ball2->v_x*sin(phi) + ball2->v_y*cos(phi));
+		double vn2 = (-ball2->v_x*cos(phi) + ball2->v_y*sin(phi));
 
 		//calculate new normal velocities
-		double _vn2 = ((*ball1).Mass() * (2 * vn1 - vn2) + (*ball2).Mass()*vn2) / ((*ball1).Mass() + (*ball2).Mass());
+		double _vn2 = (ball1->Mass() * (2 * vn1 - vn2) + ball2->Mass()*vn2) / (ball1->Mass() + ball2->Mass());
 		double _vn1 = vn2 + _vn2 - vn1;
 
-
-		//balls shouldn't overlap
-		ball1->x -= ball1->v_x != 0 ? 2 * overlap*cos(phi)*(ball1->v_x) / abs(ball1->v_x) : 0;
-		ball1->y -= ball1->v_y != 0 ? 2 * overlap*sin(phi)*(ball1->v_y) / abs(ball1->v_y) : 0;
+		////balls collide, first ball flies off
+		//ball1->x -= ball1->v_x != 0 ? 2 * overlap*cos(phi)*(ball1->v_x) / abs(ball1->v_x) : 0;
+		//ball1->y -= ball1->v_y != 0 ? 2 * overlap*sin(phi)*(ball1->v_y) / abs(ball1->v_y) : 0;
 
 
 		//convert back to (x,y) components of velocity
-		ball1->v_x = (_vn1*cos(phi) + vt1*sin(phi));
+		ball1->v_x = (-_vn1*cos(phi) + vt1*sin(phi));
 		ball1->v_y = (_vn1*sin(phi) + vt1*cos(phi));
 
-		ball2->v_x = (_vn2*cos(phi) + vt2*sin(phi));
+		ball2->v_x = (-_vn2*cos(phi) + vt2*sin(phi));
 		ball2->v_y = (_vn2*sin(phi) + vt2*cos(phi));
 	}
 }
-bool Ball::CollideWithWall(double *x, double r, double *v_x, double windowSizex)
+bool Ball::CollideWithWall(double *x_i, double r, double *v_i, double windowSizei)
 {
-	double tempx = *v_x != 0 ? *x + r*(*v_x) / abs(*v_x) : *x;
+	double tempx = *v_i != 0 ? *x_i + r*(*v_i) / abs(*v_i) : *x_i;
 
 
-	if (tempx >= windowSizex)
-		*x -= 2 * (tempx - windowSizex);
+	if (tempx >= windowSizei)
+		*x_i -= 2 * (tempx - windowSizei);
 
 	else if (tempx <= 0)
-		*x -= 2 * tempx;
+		*x_i -= 2 * tempx;
 
 	else
 		return false;
 
 
-	*v_x = -*v_x;
+	*v_i = -*v_i;
 	return true;
 }
 //

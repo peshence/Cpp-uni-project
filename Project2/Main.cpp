@@ -21,18 +21,18 @@ SDL_Event e;
 
 list<Ball> balls;
 bool quit;
+double speed = 10;
 
 
 int main(int argc, char* args[])
 {
 	Setup();
-	Ball ball1 = Ball(0, 0, 10, windowWidth, windowHeight, 5, 1);
-	Ball ball2 = Ball(640, 0, 20, windowWidth, windowHeight, -5, 1);
-	Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0, 10);
+	Ball ball1 = Ball(11, 11, 10, windowWidth, windowHeight, 5.0 / 100, 1.0 / 100, &speed);
+	Ball ball2 = Ball(619, 21, 20, windowWidth, windowHeight, -5.0 / 100, 1.0 / 100, &speed );
+	Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0.0 / 100, 10.0 / 100, &speed);
 	balls.push_back(ball1);
 	balls.push_back(ball2);
 	balls.push_back(ball3);
-	int loopperiod = 10;
 
 	while (!quit)
 	{
@@ -44,23 +44,22 @@ int main(int argc, char* args[])
 				quit = true;
 				break;
 
-			case SDL_MOUSEWHEEL:
-				loopperiod += e.wheel.y;
-				if (loopperiod < 0)
-					loopperiod = 0;
-				break;
+				case SDL_MOUSEWHEEL:
+					speed += e.wheel.y;
+					if (speed < 1)
+						speed = 1;
+					if (speed > 20)
+						speed = 20;
+					break;
 			}
 		}
 
-		DrawBalls();
-
-		//makes sure drawn screen is visible to human eye and slows down movements
-		SDL_Delay(loopperiod);
-
-		MoveBalls();
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
+		DrawBalls();
+
+		MoveBalls();
 	}
 
 	SDL_Quit();
@@ -82,8 +81,8 @@ void DrawBalls()
 	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
 	{
 		(*ball).Render(renderer);
-		SDL_RenderPresent(renderer);
 	}
+	SDL_RenderPresent(renderer);
 }
 
 void MoveBalls()
