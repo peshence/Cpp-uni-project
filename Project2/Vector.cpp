@@ -18,26 +18,37 @@ Vector::Vector(double x, double y)
 	this->y = y;
 }
 
+Vector::Vector(const Vector & v)
+{
+	x = v.x;
+	y = v.y;
+}
+
 Vector Vector::operator*(double x)
 {
-	this->x *= x;
-	this->y *= x;
-	return *this;
+	double x1 = this->x * x;
+	double y1 = this->y * x;
+	return Vector(x1, y1);
+}
+
+Vector Vector::operator/(double x)
+{
+	return (*this)*(1.0 / x);
 }
 
 double Vector::operator*(Vector v)
 {
-	return this->x*v.x;
+	return (this->x)*v.x + (this->y)*v.y;
 }
 
 Vector Vector::operator+(Vector v)
 {
-	return Vector(this->x+v.x,this->y + v.y);
+	return Vector(this->x + v.x, this->y + v.y);
 }
 
-Vector Vector::operator+=(Vector v)
+void Vector::operator+=(Vector v)
 {
-	return *this + v;
+	*this = *this + v;
 }
 
 Vector Vector::operator-(Vector v)
@@ -45,9 +56,20 @@ Vector Vector::operator-(Vector v)
 	return Vector(this->x - v.x, this->y - v.y);
 }
 
+void Vector::operator-=(Vector v)
+{
+	*this = *this - v;
+}
+
 double Vector::Length()
 {
-	return pow(x,2)+pow(y,2);
+	return sqrt(pow(x, 2) + pow(y, 2));
+}
+
+Vector Vector::Direction()
+{
+	double length = this->Length();
+	return length != 0 ? *this / length : *this;
 }
 
 

@@ -21,18 +21,18 @@ SDL_Event e;
 
 list<Ball> balls;
 bool quit;
-double speed = 10;
+double speed = 1;
 
 
 int main(int argc, char* args[])
 {
 	Setup();
-	Ball ball1 = Ball(11, 11, 10, windowWidth, windowHeight, 5.0 / 100, 1.0 / 100, &speed);
-	Ball ball2 = Ball(619, 21, 20, windowWidth, windowHeight, -5.0 / 100, 1.0 / 100, &speed );
-	Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0.0 / 100, 10.0 / 100, &speed);
+	Ball ball1 = Ball(21, 21, 20, windowWidth, windowHeight, 5.0 / 100, 0.1 / 100, &speed);
+	Ball ball2 = Ball(619, 21, 20, windowWidth, windowHeight, -5.0 / 100, 0.1 / 100, &speed );
+	//Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0.0 / 100, 10.0 / 100, &speed);
 	balls.push_back(ball1);
 	balls.push_back(ball2);
-	balls.push_back(ball3);
+	//balls.push_back(ball3);
 
 	while (!quit)
 	{
@@ -96,6 +96,15 @@ void MoveBalls()
 				Ball::Collide(&(*ball), &(*ball2));
 		}*/
 	}
+	//for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
+	//{
+	//	(*ball).FirstCollision(&balls);
+	//	/*for (list<Ball>::iterator ball2 = ball; ball2 != balls.end(); ball2++)
+	//	{
+	//	if (ball != ball2)
+	//	Ball::Collide(&(*ball), &(*ball2));
+	//	}*/
+	//}
 }
 
 int move(int xi, int *vi, int rectSizei, int windowSizei)

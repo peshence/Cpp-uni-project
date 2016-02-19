@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include <list>
+#include "Vector.h"
 using namespace std;
 class Ball
 {
@@ -10,6 +11,7 @@ public:
 	~Ball();
 	void Move(list<Ball> *balls);
 	void Render(SDL_Renderer* renderer);// { Render(x, y, r, renderer); }
+	void FirstCollision(list<Ball> *balls);
 	void Collide(Ball *ball);
 	void CollideWithWall();
 	int Mass();
@@ -18,16 +20,15 @@ public:
 	static void Collide(Ball* movingBall, Ball* stationaryBall);
 	static bool CollideWithWall(double *x_i, double r, double *v_i, double windowSizei);
 	double* speed;
+	Vector movement = Vector(0);
 private:
-	double x = 0;
-	double y = 0;
-	double v_x = 0;
-	double v_y = 0;
+	Vector v = Vector(0);
+	Vector r = Vector(0);
 
 	int windowSizex = 640;
 	int windowSizey = 480;
 
-	double r;
+	double radius;
 
 
 	int c1;

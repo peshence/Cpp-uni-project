@@ -21,13 +21,13 @@ Ball::Ball()
 ///<param name="speed">controls the magnitude of the ball's velocity</param>
 Ball::Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed)
 {
-	this->x = x;
-	this->y = y;
-	this->r = r;
+	this->r.x = x;
+	this->r.y = y;
+	this->radius = r;
 	this->windowSizex = wsx;
 	this->windowSizey = wsy;
-	this->v_x = vx;
-	this->v_y = vy;
+	this->v.x = vx;
+	this->v.y = vy;
 	c1 = rand() % 255;
 	c1Amp = rand() % 250 + 200;
 	c2 = rand() % 255;
@@ -46,42 +46,150 @@ Ball::~Ball()
 
 void Ball::Move(list<Ball>* balls)
 {
-	x += v_x*(*speed);
-	y += v_y*(*speed);
-	CollideWithWall();
+	movement = v**speed - movement;
+	FirstCollision(balls);
 
-	for (list<Ball>::iterator i = balls->begin(); i != balls->end(); i++)
+}
+
+
+void Ball::FirstCollision(list<Ball>* balls)
+{
+	Ball* firstBall = NULL;
+	double displacementAlongMovement = 0;
+	for (list<Ball>::iterator ball = balls->begin(); ball != balls->end(); ball++)
 	{
-		if (&*i != this) Collide(&*i);
+		if (&*ball == this)
+			continue;
+
+		Vector Displacement = (ball->r - this->r);
+		if ((Displacement.Length() - ball->radius - this->radius) > movement.Length())
+			continue;
+
+		double displacementAlongMovementCur = Displacement*(movement.Direction());
+		
+		if (displacementAlongMovementCur < 0) continue;
+
+		displacementAlongMovementCur -= sqrt(pow((this->radius + ball->radius), 2) - pow((Displacement - movement.Direction()*displacementAlongMovementCur).Length(), 2));
+
+
+		if (firstBall == NULL)
+		{
+			firstBall = &(*ball);
+			displacementAlongMovement = displacementAlongMovementCur;
+			continue;
+		}
+
+		if (displacementAlongMovementCur < displacementAlongMovement)
+		{
+			firstBall = &*ball;
+			displacementAlongMovement = displacementAlongMovementCur;
+		}
 	}
 
-	int i;
-	if (x < 0 || y < 0 || x>640 || y>480)
+	if (firstBall == NULL)
+		CollideWithWall();
+	else
 	{
-		cout << "error";
-		cin >> i;
+		Vector changeInMovement = movement.Direction() * displacementAlongMovement;
+		Vector afterMove = r + changeInMovement;
+
+		//NOTE: ineffective, should work on this in the future
+		//this is done to check if there is wall collision before the first ball collision
+		if (afterMove.x<0 || afterMove.x>windowSizex || afterMove.y<0 || afterMove.y>windowSizey)
+		{
+			CollideWithWall();
+			FirstCollision(balls);
+			return;
+		}
+		Vector temp = (movement.Direction() * displacementAlongMovement);
+		r += (movement.Direction() * displacementAlongMovement);
+		movement -= (movement.Direction() * displacementAlongMovement);
+		Collide(firstBall);
+	}
+
+
+	if (movement.Length()/(v**speed).Length() > 0.1)
+	{
+		if (firstBall != NULL)
+		{
+			//if ((movement * (firstBall->r - r).Direction()) > 0)
+			if (firstBall->Mass() < Mass())
+			{
+				firstBall->FirstCollision(balls);
+				FirstCollision(balls);
+			}
+			else
+			{
+				FirstCollision(balls);
+				firstBall->FirstCollision(balls);
+			}
+		}
+		else
+			FirstCollision(balls);
 	}
 }
 
 void Ball::Collide(Ball * ball)
 {
-	Collide(this, ball);
+	double vn1 = (ball->r - r).Direction() * v;
+	double vn2 = (ball->r - r).Direction() * ball->v;
+
+	double _vn2 = 2 * (vn1 - vn2)*ball->Mass() / (Mass() + ball->Mass());
+	double movementRatio = movement.Length() / (v.Length()**speed);
+	if (isnan(movementRatio))
+		movementRatio = 0;
+	Vector n = ball->r - r;
+	Vector nn = n.Direction();
+	v = v - nn * _vn2;
+	movement = v*movementRatio**speed;
+
+	ball->v = v + nn *_vn2*Mass() / ball->Mass();
+	ball->movement = ball->v*movementRatio**speed;
 }
 
 void Ball::CollideWithWall()
 {
-	CollideWithWall(&x, r, &v_x, windowSizex);
-	CollideWithWall(&y, r, &v_y, windowSizey);
+	/*CollideWithWall(&(r.x), radius, &(v.x), windowSizex);
+	CollideWithWall(&(r.y), radius, &(v.y), windowSizey);*/
+	Vector tempr = r + movement;
+	double overlap = 0;
+
+	if ((tempr.x + radius) > windowSizex)
+	{
+		overlap = tempr.x - (windowSizex - radius);
+		v.x = -v.x;
+	}
+	else if ((tempr.x - radius) < 0)
+	{
+		overlap = radius - tempr.x;
+		v.x = -v.x;
+	}
+	r += (movement - (movement).Direction() * overlap);
+
+	overlap = 0;
+	if ((tempr.y + radius) > windowSizey)
+	{
+		overlap = tempr.y - (windowSizey - radius);
+		v.y = -v.y;
+	}
+	else if ((tempr.y - radius) < 0)
+	{
+		overlap = radius - tempr.y;
+		v.y = -v.y;
+	}
+	r -= movement.Direction()*overlap;
+
+	movement = v *  (movement.Direction()*overlap).Length() / movement.Length();
 }
 
 int Ball::Mass()
 {
-	return M_PI*pow(r, 2);
+	return pow(radius, 2);
 }
 
 double Ball::Energy()
 {
-	return Mass()*(pow(v_x,2)+pow(v_y,2))/2;
+	return Mass()*(pow(v.x, 2) + pow(v.y, 2)) / 2;
 }
 
 
@@ -99,82 +207,42 @@ void Ball::Render(SDL_Renderer* renderer)
 	//alpha = sin((clock() - start));
 	SDL_SetRenderDrawColor(renderer, c1, c2, c3, alpha);
 
-	double tx = r;
+	double tx = radius;
 	double ty = 0;
-	double tr = pow(r, 2);
+	double tr = pow(radius, 2);
 
 	while (ty < tx)
 	{
-		SDL_RenderDrawLine(renderer, x - tx, y + ty, x + tx, y + ty);
-		SDL_RenderDrawLine(renderer, x - tx, y - ty, x + tx, y - ty);
+		SDL_RenderDrawLine(renderer, r.x - tx, r.y + ty, r.x + tx, r.y + ty);
+		SDL_RenderDrawLine(renderer, r.x - tx, r.y - ty, r.x + tx, r.y - ty);
 		std::cout << ty << ' ' << tx << ' ' << tr << '\n';
 
 		ty++;
 		tr = pow(tx, 2) + pow(ty, 2);
-		if ((sqrt(tr)) >= r)
+		if ((sqrt(tr)) >= radius)
 			tx--;
 	}
 
 	tx = 0;
-	ty = r;
+	ty = radius;
 	while (ty >= tx)
 	{
-		SDL_RenderDrawLine(renderer, x - tx, y + ty, x + tx, y + ty);
-		SDL_RenderDrawLine(renderer, x - tx, y - ty, x + tx, y - ty);
+		SDL_RenderDrawLine(renderer, r.x - tx, r.y + ty, r.x + tx, r.y + ty);
+		SDL_RenderDrawLine(renderer, r.x - tx, r.y - ty, r.x + tx, r.y - ty);
 		std::cout << ty << ' ' << tx << ' ' << tr << '\n';
 
 		tx++;
 		tr = pow(tx, 2) + pow(ty, 2);
-		if ((sqrt(tr)) >= r)
+		if ((sqrt(tr)) >= radius)
 			ty--;
 	}
 }
 
 void Ball::Collide(Ball* ball1, Ball* ball2)
 {
-	double distance = sqrt(abs(pow((ball1->x - ball2->x), 2) + pow((ball1->y - ball2->y), 2)));
-	double overlap = (ball1->r + ball2->r) - distance;
-	int t = 0;
-	double energy = ball1->Energy() + ball2->Energy();
 
-	if (overlap >= 0)
-	{
-		//balls shouldn't overlap
-		while (overlap > 0)
-		{
-			ball1->x -= ball1->v_x != 0 ? ball1->v_x / abs(ball1->v_x) : 0;
-			ball1->y -= ball1->v_y != 0 ? ball1->v_y / abs(ball1->v_y) : 0;
-			t++;
-			distance = sqrt(abs(pow(((ball1->x) - ball2->x), 2) + pow(((ball1->y) - ball2->y), 2)));
-			overlap = (ball1->r + ball2->r) - distance;
-		}
-
-		double phi = (ball1->x - ball2->x) != 0 ? atan((ball1->y - ball2->y) / (ball1->x - ball2->x)) : 1;
-
-		// convert to tangent and normal components of velocity
-		double vt1 = (ball1->v_x*sin(phi) + ball1->v_y*cos(phi));
-		double vn1 = (-ball1->v_x*cos(phi) + ball1->v_y*sin(phi));
-
-		double vt2 = (ball2->v_x*sin(phi) + ball2->v_y*cos(phi));
-		double vn2 = (-ball2->v_x*cos(phi) + ball2->v_y*sin(phi));
-
-		//calculate new normal velocities
-		double _vn2 = (ball1->Mass() * (2 * vn1 - vn2) + ball2->Mass()*vn2) / (ball1->Mass() + ball2->Mass());
-		double _vn1 = vn2 + _vn2 - vn1;
-
-		////balls collide, first ball flies off
-		//ball1->x -= ball1->v_x != 0 ? 2 * overlap*cos(phi)*(ball1->v_x) / abs(ball1->v_x) : 0;
-		//ball1->y -= ball1->v_y != 0 ? 2 * overlap*sin(phi)*(ball1->v_y) / abs(ball1->v_y) : 0;
-
-
-		//convert back to (x,y) components of velocity
-		ball1->v_x = (-_vn1*cos(phi) + vt1*sin(phi));
-		ball1->v_y = (_vn1*sin(phi) + vt1*cos(phi));
-
-		ball2->v_x = (-_vn2*cos(phi) + vt2*sin(phi));
-		ball2->v_y = (_vn2*sin(phi) + vt2*cos(phi));
-	}
 }
+
 bool Ball::CollideWithWall(double *x_i, double r, double *v_i, double windowSizei)
 {
 	double tempx = *v_i != 0 ? *x_i + r*(*v_i) / abs(*v_i) : *x_i;
@@ -193,6 +261,69 @@ bool Ball::CollideWithWall(double *x_i, double r, double *v_i, double windowSize
 	*v_i = -*v_i;
 	return true;
 }
+//void Ball::Collide(Ball* ball1, Ball* ball2)
+//{
+//	double distance = sqrt(abs(pow((ball1->x - ball2->x), 2) + pow((ball1->y - ball2->y), 2)));
+//	double overlap = (ball1->radius + ball2->radius) - distance;
+//	int t = 0;
+//	double energy = ball1->Energy() + ball2->Energy();
+//
+//	if (overlap >= 0)
+//	{
+//		//balls shouldn't overlap
+//		while (overlap > 0)
+//		{
+//			ball1->x -= ball1->v_x != 0 ? ball1->v_x / abs(ball1->v_x) : 0;
+//			ball1->y -= ball1->v_y != 0 ? ball1->v_y / abs(ball1->v_y) : 0;
+//			t++;
+//			distance = sqrt(abs(pow(((ball1->x) - ball2->x), 2) + pow(((ball1->y) - ball2->y), 2)));
+//			overlap = (ball1->radius + ball2->radius) - distance;
+//		}
+//
+//		double phi = (ball1->x - ball2->x) != 0 ? atan((ball1->y - ball2->y) / (ball1->x - ball2->x)) : 1;
+//
+//		// convert to tangent and normal components of velocity
+//		double vt1 = (ball1->v_x*sin(phi) + ball1->v_y*cos(phi));
+//		double vn1 = (-ball1->v_x*cos(phi) + ball1->v_y*sin(phi));
+//
+//		double vt2 = (ball2->v_x*sin(phi) + ball2->v_y*cos(phi));
+//		double vn2 = (-ball2->v_x*cos(phi) + ball2->v_y*sin(phi));
+//
+//		//calculate new normal velocities
+//		double _vn2 = (ball1->Mass() * (2 * vn1 - vn2) + ball2->Mass()*vn2) / (ball1->Mass() + ball2->Mass());
+//		double _vn1 = vn2 + _vn2 - vn1;
+//
+//		////balls collide, first ball flies off
+//		//ball1->x -= ball1->v_x != 0 ? 2 * overlap*cos(phi)*(ball1->v_x) / abs(ball1->v_x) : 0;
+//		//ball1->y -= ball1->v_y != 0 ? 2 * overlap*sin(phi)*(ball1->v_y) / abs(ball1->v_y) : 0;
+//
+//
+//		//convert back to (x,y) components of velocity
+//		ball1->v_x = (-_vn1*cos(phi) + vt1*sin(phi));
+//		ball1->v_y = (_vn1*sin(phi) + vt1*cos(phi));
+//
+//		ball2->v_x = (-_vn2*cos(phi) + vt2*sin(phi));
+//		ball2->v_y = (_vn2*sin(phi) + vt2*cos(phi));
+//	}
+//}
+//bool Ball::CollideWithWall(double *x_i, double r, double *v_i, double windowSizei)
+//{
+//	double tempx = *v_i != 0 ? *x_i + r*(*v_i) / abs(*v_i) : *x_i;
+//
+//
+//	if (tempx >= windowSizei)
+//		*x_i -= 2 * (tempx - windowSizei);
+//
+//	else if (tempx <= 0)
+//		*x_i -= 2 * tempx;
+//
+//	else
+//		return false;
+//
+//
+//	*v_i = -*v_i;
+//	return true;
+//}
 //
 //void Ball::Render(int x, int y, double r, SDL_Renderer* renderer)
 //{
