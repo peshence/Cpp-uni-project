@@ -5,6 +5,7 @@
 #include <ctime>
 #include "Ball.h"
 #include <list>
+#include <iostream>
 
 using namespace std;
 
@@ -20,19 +21,32 @@ SDL_Renderer* renderer = NULL;
 SDL_Event e;
 
 list<Ball> balls;
+list<Line> walls;
 bool quit;
-double speed = 1;
+double speed = 5;
+bool pause = false;
 
 
 int main(int argc, char* args[])
 {
 	Setup();
-	Ball ball1 = Ball(21, 21, 20, windowWidth, windowHeight, 5.0 / 100, 0.1 / 100, &speed);
-	Ball ball2 = Ball(619, 21, 20, windowWidth, windowHeight, -5.0 / 100, 0.1 / 100, &speed );
-	//Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0.0 / 100, 10.0 / 100, &speed);
+	Vector northWest = Vector(0, 0);
+	Vector southEast = Vector(windowWidth, windowHeight);
+	walls.push_back(Line(Vector(0, windowWidth), northWest));
+	walls.push_back(Line(Vector(windowHeight, 0), southEast));
+	walls.push_back(Line(Vector(windowHeight, 0), northWest));
+	walls.push_back(Line(Vector(0, windowWidth), southEast));
+	Ball ball1 = Ball(11, 21, 10, windowWidth, windowHeight, 5.0 / 100, 0.0 / 100, &speed);
+	Ball ball2 = Ball(619, 21, 20, windowWidth, windowHeight, 5.0 / 100, 0.0 / 100, &speed);
+	Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0.0 / 100, 10.0 / 100, &speed);
 	balls.push_back(ball1);
 	balls.push_back(ball2);
-	//balls.push_back(ball3);
+	balls.push_back(ball3);
+	double energy = 0;
+	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
+	{
+		energy += (*ball).Energy();
+	}
 
 	while (!quit)
 	{
@@ -44,13 +58,15 @@ int main(int argc, char* args[])
 				quit = true;
 				break;
 
-				case SDL_MOUSEWHEEL:
-					speed += e.wheel.y;
-					if (speed < 1)
-						speed = 1;
-					if (speed > 20)
-						speed = 20;
-					break;
+			case SDL_MOUSEWHEEL:
+				speed += e.wheel.y;
+				if (speed < 1)
+					speed = 1;
+				if (speed > 20)
+					speed = 20;
+				break;
+			case SDL_MOUSEBUTTONDOWN:
+				pause = !pause;
 			}
 		}
 
@@ -59,7 +75,15 @@ int main(int argc, char* args[])
 		SDL_RenderClear(renderer);
 		DrawBalls();
 
-		MoveBalls();
+		if (!pause)
+			MoveBalls();
+		double energy2 = 0;
+		for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
+		{
+			energy2 += (*ball).Energy();
+		}
+		if (energy2 > energy + 1)
+			cout << "Energy accumulation";
 	}
 
 	SDL_Quit();
@@ -89,7 +113,7 @@ void MoveBalls()
 {
 	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
 	{
-		(*ball).Move(&balls);
+		(*ball).Move(&balls, &walls);
 		/*for (list<Ball>::iterator ball2 = ball; ball2 != balls.end(); ball2++)
 		{
 			if (ball != ball2)

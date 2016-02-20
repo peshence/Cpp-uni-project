@@ -2,18 +2,22 @@
 #include <SDL.h>
 #include <list>
 #include "Vector.h"
+#include "Line.h"
 using namespace std;
 class Ball
 {
+	friend class Line;
 public:
 	Ball();
 	Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed);
 	~Ball();
-	void Move(list<Ball> *balls);
+	void Move(list<Ball> *balls, list<Line> *walls);
 	void Render(SDL_Renderer* renderer);// { Render(x, y, r, renderer); }
-	void FirstCollision(list<Ball> *balls);
+	//void FirstCollision(list<Ball> *balls);
+	void FirstCollision(list<Ball> *balls, list<Line> *walls);
 	void Collide(Ball *ball);
-	void CollideWithWall();
+	void CollideWithWall(Line wall, double movementToCollision);
+	/*void CollideWithWall();*/
 	int Mass();
 	double Energy();
 	//static void Render(double x, double y, double r, SDL_Renderer* renderer);

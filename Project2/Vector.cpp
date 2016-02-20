@@ -1,5 +1,5 @@
 #include "Vector.h"
-
+#include <iostream>
 
 
 Vector::Vector()
@@ -38,7 +38,12 @@ Vector Vector::operator/(double x)
 
 double Vector::operator*(Vector v)
 {
-	return (this->x)*v.x + (this->y)*v.y;
+	double temp = (this->x)*v.x + (this->y)*v.y;
+	if (isnan(temp))
+	{
+		cout << "stahp";
+	}
+	return temp;
 }
 
 Vector Vector::operator+(Vector v)

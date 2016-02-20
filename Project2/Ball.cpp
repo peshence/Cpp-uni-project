@@ -44,15 +44,15 @@ Ball::~Ball()
 {
 }
 
-void Ball::Move(list<Ball>* balls)
+void Ball::Move(list<Ball>* balls, list<Line> *walls)
 {
-	movement = v**speed - movement;
-	FirstCollision(balls);
+	movement = v**speed;
+	FirstCollision(balls, walls);
 
 }
 
 
-void Ball::FirstCollision(list<Ball>* balls)
+void Ball::FirstCollision(list<Ball>* balls, list<Line>* walls)
 {
 	Ball* firstBall = NULL;
 	double displacementAlongMovement = 0;
@@ -66,11 +66,21 @@ void Ball::FirstCollision(list<Ball>* balls)
 			continue;
 
 		double displacementAlongMovementCur = Displacement*(movement.Direction());
-		
+
 		if (displacementAlongMovementCur < 0) continue;
+		double ffstemp = (Displacement - movement.Direction()*displacementAlongMovementCur).Length();
+		if (ffstemp > radius + ball->radius)
+			continue;
+		double tempdisplacementAlongMovementCur = displacementAlongMovementCur - sqrt(pow((this->radius + ball->radius), 2) - pow(ffstemp, 2));
+
+		if (isnan(tempdisplacementAlongMovementCur))
+		{
+			cout << "stahp";
+		}
 
 		displacementAlongMovementCur -= sqrt(pow((this->radius + ball->radius), 2) - pow((Displacement - movement.Direction()*displacementAlongMovementCur).Length(), 2));
 
+		if (displacementAlongMovementCur < 0) continue;
 
 		if (firstBall == NULL)
 		{
@@ -86,101 +96,173 @@ void Ball::FirstCollision(list<Ball>* balls)
 		}
 	}
 
-	if (firstBall == NULL)
-		CollideWithWall();
+	Line* firstWall = NULL;
+	for (list<Line>::iterator wall = walls->begin(); wall != walls->end(); wall++)
+	{
+		double pathToCollision = wall->PathToCollision(*this);
+		if (pathToCollision > 0 && pathToCollision <= movement.Length() && (firstBall == NULL || pathToCollision < displacementAlongMovement))
+		{
+			firstWall = &*wall;
+			displacementAlongMovement = pathToCollision;
+			firstBall = NULL;
+		}
+	}
+
+	if (firstBall == NULL && firstWall == NULL)
+	{
+		r += movement;
+		return;
+	}
+	if (firstWall != NULL)
+	{
+		CollideWithWall(*firstWall, displacementAlongMovement);
+	}
 	else
 	{
-		Vector changeInMovement = movement.Direction() * displacementAlongMovement;
-		Vector afterMove = r + changeInMovement;
-
-		//NOTE: ineffective, should work on this in the future
-		//this is done to check if there is wall collision before the first ball collision
-		if (afterMove.x<0 || afterMove.x>windowSizex || afterMove.y<0 || afterMove.y>windowSizey)
-		{
-			CollideWithWall();
-			FirstCollision(balls);
-			return;
-		}
 		Vector temp = (movement.Direction() * displacementAlongMovement);
 		r += (movement.Direction() * displacementAlongMovement);
 		movement -= (movement.Direction() * displacementAlongMovement);
 		Collide(firstBall);
 	}
+	//if (movement.Length() / (v**speed).Length() > 0.1)
+	//{
+	//	if (firstBall != NULL)
+	//	{
+	//		//if ((movement * (firstBall->r - r).Direction()) > 0)
+	//		if (firstBall->Mass() < Mass())
+	//		{
+	//			firstBall->FirstCollision(balls, walls);
+	//			FirstCollision(balls, walls);
+	//		}
+	//		else
+	//		{
+	//			FirstCollision(balls, walls);
+	//			firstBall->FirstCollision(balls, walls);
+	//		}
+	//	}
+	//	else
+	//		FirstCollision(balls, walls);
+	//}
+	//if (firstBall == NULL)
+	//	CollideWithWall();
+	//else
+	//{
+	//	Vector changeInMovement = movement.Direction() * displacementAlongMovement;
+	//	Vector afterMove = r + changeInMovement;
+
+	//	//NOTE: ineffective, should work on this in the future
+	//	//this is done to check if there is wall collision before the first ball collision
+	//	if (afterMove.x<0 || afterMove.x>windowSizex || afterMove.y<0 || afterMove.y>windowSizey)
+	//	{
+	//		CollideWithWall();
+	//		FirstCollision(balls);
+	//		return;
+	//	}
+	//	Vector temp = (movement.Direction() * displacementAlongMovement);
+	//	r += (movement.Direction() * displacementAlongMovement);
+	//	if (isnan(r.x))
+	//	{
+	//		cout << "stahp";
+	//	}
+	//	movement -= (movement.Direction() * displacementAlongMovement);
+	//	Collide(firstBall);
+	//}
 
 
-	if (movement.Length()/(v**speed).Length() > 0.1)
-	{
-		if (firstBall != NULL)
-		{
-			//if ((movement * (firstBall->r - r).Direction()) > 0)
-			if (firstBall->Mass() < Mass())
-			{
-				firstBall->FirstCollision(balls);
-				FirstCollision(balls);
-			}
-			else
-			{
-				FirstCollision(balls);
-				firstBall->FirstCollision(balls);
-			}
-		}
-		else
-			FirstCollision(balls);
-	}
+	//if (movement.Length()/(v**speed).Length() > 0.1)
+	//{
+	//	if (firstBall != NULL)
+	//	{
+	//		//if ((movement * (firstBall->r - r).Direction()) > 0)
+	//		if (firstBall->Mass() < Mass())
+	//		{
+	//			firstBall->FirstCollision(balls);
+	//			FirstCollision(balls);
+	//		}
+	//		else
+	//		{
+	//			FirstCollision(balls);
+	//			firstBall->FirstCollision(balls);
+	//		}
+	//	}
+	//	else
+	//		FirstCollision(balls);
+	//}
 }
 
 void Ball::Collide(Ball * ball)
 {
+	double initenergy = Energy() + ball->Energy();
 	double vn1 = (ball->r - r).Direction() * v;
 	double vn2 = (ball->r - r).Direction() * ball->v;
+	if (vn2 > vn1) return;
 
-	double _vn2 = 2 * (vn1 - vn2)*ball->Mass() / (Mass() + ball->Mass());
+	double _vn2 = 2 * (vn1 - vn2) / (Mass() + ball->Mass());
 	double movementRatio = movement.Length() / (v.Length()**speed);
 	if (isnan(movementRatio))
 		movementRatio = 0;
 	Vector n = ball->r - r;
 	Vector nn = n.Direction();
-	v = v - nn * _vn2;
+	v = v - nn * _vn2*ball->Mass();
 	movement = v*movementRatio**speed;
 
-	ball->v = v + nn *_vn2*Mass() / ball->Mass();
+	ball->v = ball->v + nn *_vn2*Mass();
+	double newEnergy = Energy() + ball->Energy();
+	if (newEnergy > initenergy)
+		cout << "stahp";
+	else if (newEnergy < initenergy)
+		cout << "stahp";
 	ball->movement = ball->v*movementRatio**speed;
+
 }
 
-void Ball::CollideWithWall()
+void Ball::CollideWithWall(Line wall, double movementToCollision)
 {
-	/*CollideWithWall(&(r.x), radius, &(v.x), windowSizex);
-	CollideWithWall(&(r.y), radius, &(v.y), windowSizey);*/
-	Vector tempr = r + movement;
-	double overlap = 0;
+	Vector curMovement = movement.Direction() * movementToCollision;
+	r += curMovement;
+	double movementRatio = movementToCollision / movement.Length();
 
-	if ((tempr.x + radius) > windowSizex)
-	{
-		overlap = tempr.x - (windowSizex - radius);
-		v.x = -v.x;
-	}
-	else if ((tempr.x - radius) < 0)
-	{
-		overlap = radius - tempr.x;
-		v.x = -v.x;
-	}
-	r += (movement - (movement).Direction() * overlap);
+	Vector vn = v - wall.length.Direction()*(wall.length.Direction() * v);
+	v = v - vn * 2;
 
-	overlap = 0;
-	if ((tempr.y + radius) > windowSizey)
-	{
-		overlap = tempr.y - (windowSizey - radius);
-		v.y = -v.y;
-	}
-	else if ((tempr.y - radius) < 0)
-	{
-		overlap = radius - tempr.y;
-		v.y = -v.y;
-	}
-	r -= movement.Direction()*overlap;
-
-	movement = v *  (movement.Direction()*overlap).Length() / movement.Length();
+	movement = v**speed*(1 - movementRatio);
 }
+
+//void Ball::CollideWithWall()
+//{
+//	/*CollideWithWall(&(r.x), radius, &(v.x), windowSizex);
+//	CollideWithWall(&(r.y), radius, &(v.y), windowSizey);*/
+//	Vector tempr = r + movement;
+//	double overlap = 0;
+//
+//	if ((tempr.x + radius) > windowSizex)
+//	{
+//		overlap = tempr.x - (windowSizex - radius);
+//		v.x = -v.x;
+//	}
+//	else if ((tempr.x - radius) < 0)
+//	{
+//		overlap = radius - tempr.x;
+//		v.x = -v.x;
+//	}
+//	r += (movement - (movement).Direction() * overlap / movement.Direction().x);
+//	movement = v * (movement.Direction()*overlap**speed / movement.Direction().x).Length() / movement.Length();
+//
+//	overlap = 0;
+//	if ((tempr.y + radius) > windowSizey)
+//	{
+//		overlap = tempr.y - (windowSizey - radius);
+//		v.y = -v.y;
+//	}
+//	else if ((tempr.y - radius) < 0)
+//	{
+//		overlap = radius - tempr.y;
+//		v.y = -v.y;
+//	}
+//	r -= movement.Direction()*overlap / movement.Direction().x;
+//
+//	movement = v * (movement.Direction()*overlap**speed / movement.Direction().x).Length() / movement.Length();
+//}
 
 int Ball::Mass()
 {
