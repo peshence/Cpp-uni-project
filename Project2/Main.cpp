@@ -25,6 +25,7 @@ list<Line> walls;
 bool quit;
 double speed = 5;
 bool pause = false;
+Ball newball = Ball(windowWidth / 2, windowHeight / 2, 5, windowWidth, windowHeight, 0, 0, &speed);
 
 
 int main(int argc, char* args[])
@@ -36,18 +37,14 @@ int main(int argc, char* args[])
 	walls.push_back(Line(Vector(windowHeight, 0), southEast));
 	walls.push_back(Line(Vector(windowHeight, 0), northWest));
 	walls.push_back(Line(Vector(0, windowWidth), southEast));
-	Ball ball1 = Ball(11, 21, 10, windowWidth, windowHeight, 5.0 / 100, 0.0 / 100, &speed);
-	Ball ball2 = Ball(619, 21, 20, windowWidth, windowHeight, 5.0 / 100, 0.0 / 100, &speed);
-	Ball ball3 = Ball(320, 29, 15, windowWidth, windowHeight, 0.0 / 100, 10.0 / 100, &speed);
-	balls.push_back(ball1);
-	balls.push_back(ball2);
-	balls.push_back(ball3);
+	balls.push_back(Ball(11, 21, 10, windowWidth, windowHeight, 5.0 / 100, 0.0 / 100, &speed));
+	balls.push_back(Ball(619, 21, 20, windowWidth, windowHeight, 5.0 / 100, 0.0 / 100, &speed));
+	balls.push_back(Ball(320, 21, 15, windowWidth, windowHeight, 0.0 / 100, 0.0 / 100, &speed));
 	double energy = 0;
 	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
 	{
 		energy += (*ball).Energy();
 	}
-
 	while (!quit)
 	{
 		while (SDL_PollEvent(&e) != 0)
@@ -66,14 +63,34 @@ int main(int argc, char* args[])
 					speed = 20;
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				pause = !pause;
+				if (e.button.button == SDL_BUTTON_LEFT)
+					pause = !pause;
+				else if (pause && e.button.button == SDL_BUTTON_RIGHT)
+				{
+					double start = clock();
+					newball = Ball(e.button.x, e.button.y, 5, windowWidth, windowHeight, 0, 0, &speed);
+					if (DrawNewBall())
+					{
+						SDL_PollEvent(&e);
+						while (e.type != SDL_MOUSEBUTTONUP)
+						{
+							if ((clock() - start) > 100)
+							{
+								start = clock();
+								newball.radius = newball.radius > 39 ? 40 : newball.radius + 1;
+								if(!DrawNewBall()) break;
+							}
+							SDL_PollEvent(&e);
+						}
+						if(DrawNewBall()) balls.push_back(newball);
+					}
+				}
+				break;
 			}
 		}
 
 
-		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-		SDL_RenderClear(renderer);
-		DrawBalls();
+
 
 		if (!pause)
 			MoveBalls();
@@ -82,8 +99,11 @@ int main(int argc, char* args[])
 		{
 			energy2 += (*ball).Energy();
 		}
-		if (energy2 > energy + 1)
+		if (energy2 > energy*1.1)
 			cout << "Energy accumulation";
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+		SDL_RenderClear(renderer);
+		DrawBalls();
 	}
 
 	SDL_Quit();
@@ -131,12 +151,39 @@ void MoveBalls()
 	//}
 }
 
-int move(int xi, int *vi, int rectSizei, int windowSizei)
+bool DrawNewBall()
 {
-	xi += *vi;
-	int temp = xi + rectSizei*((*vi) + abs(*vi)) / (2 * abs(*vi));
-	if (temp >= windowSizei || temp <= 0)
-		*vi = -*vi;
-	return xi;
+	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
+	{
+		double displacement = (ball->r - newball.r).Length();
+		if ((displacement - ball->radius - newball.radius) < 0)
+		{
+			cout << endl << clock() << " - Too close to another ball!" << endl;
+			return false;
+		}
+	}
+
+	for (list<Line>::iterator wall = walls.begin(); wall != walls.end(); wall++)
+	{
+		double distance = (*wall - newball.r).Length();
+		if (distance < newball.radius)
+		{
+			cout << endl << clock() << " - Too close to wall!" << endl;
+			return false;
+		}
+	}
+
+	newball.Render(renderer);
+	SDL_RenderPresent(renderer);
+	return true;
 }
+
+//int move(int xi, int *vi, int rectSizei, int windowSizei)
+//{
+//	xi += *vi;
+//	int temp = xi + rectSizei*((*vi) + abs(*vi)) / (2 * abs(*vi));
+//	if (temp >= windowSizei || temp <= 0)
+//		*vi = -*vi;
+//	return xi;
+//}
 

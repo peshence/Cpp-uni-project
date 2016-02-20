@@ -192,7 +192,7 @@ void Ball::FirstCollision(list<Ball>* balls, list<Line>* walls)
 
 void Ball::Collide(Ball * ball)
 {
-	double initenergy = Energy() + ball->Energy();
+	/*double initenergy = Energy() + ball->Energy();*/
 	double vn1 = (ball->r - r).Direction() * v;
 	double vn2 = (ball->r - r).Direction() * ball->v;
 	if (vn2 > vn1) return;
@@ -207,11 +207,11 @@ void Ball::Collide(Ball * ball)
 	movement = v*movementRatio**speed;
 
 	ball->v = ball->v + nn *_vn2*Mass();
-	double newEnergy = Energy() + ball->Energy();
+	/*double newEnergy = Energy() + ball->Energy();
 	if (newEnergy > initenergy)
 		cout << "stahp";
 	else if (newEnergy < initenergy)
-		cout << "stahp";
+		cout << "stahp";*/
 	ball->movement = ball->v*movementRatio**speed;
 
 }
@@ -297,7 +297,7 @@ void Ball::Render(SDL_Renderer* renderer)
 	{
 		SDL_RenderDrawLine(renderer, r.x - tx, r.y + ty, r.x + tx, r.y + ty);
 		SDL_RenderDrawLine(renderer, r.x - tx, r.y - ty, r.x + tx, r.y - ty);
-		std::cout << ty << ' ' << tx << ' ' << tr << '\n';
+		//std::cout << ty << ' ' << tx << ' ' << tr << '\n';
 
 		ty++;
 		tr = pow(tx, 2) + pow(ty, 2);
@@ -311,7 +311,7 @@ void Ball::Render(SDL_Renderer* renderer)
 	{
 		SDL_RenderDrawLine(renderer, r.x - tx, r.y + ty, r.x + tx, r.y + ty);
 		SDL_RenderDrawLine(renderer, r.x - tx, r.y - ty, r.x + tx, r.y - ty);
-		std::cout << ty << ' ' << tx << ' ' << tr << '\n';
+		//std::cout << ty << ' ' << tx << ' ' << tr << '\n';
 
 		tx++;
 		tr = pow(tx, 2) + pow(ty, 2);

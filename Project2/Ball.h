@@ -8,6 +8,8 @@ class Ball
 {
 	friend class Line;
 public:
+	Vector r = Vector(0);
+	double radius;
 	Ball();
 	Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed);
 	~Ball();
@@ -27,13 +29,9 @@ public:
 	Vector movement = Vector(0);
 private:
 	Vector v = Vector(0);
-	Vector r = Vector(0);
 
 	int windowSizex = 640;
 	int windowSizey = 480;
-
-	double radius;
-
 
 	int c1;
 	int c1Amp;
