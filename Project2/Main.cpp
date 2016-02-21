@@ -6,13 +6,15 @@
 #include "Ball.h"
 #include <list>
 #include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
-const int windowWidth = 640;
-const int windowHeight = 480;
-const int maxBallSize = 40;
-const int maxNumberOfBalls = 20;
+int windowWidth = 640;
+int windowHeight = 480;
+int maxNumberOfBalls = 20;
+const int maxBallSize = 30;
 
 
 SDL_Window* window = NULL;
@@ -25,6 +27,7 @@ list<Line> walls;
 bool quit;
 double speed = 5;
 bool pause = false;
+bool newballspeed = false;
 Ball newball = Ball(windowWidth / 2, windowHeight / 2, 5, windowWidth, windowHeight, 0, 0, &speed);
 
 
@@ -64,9 +67,29 @@ int main(int argc, char* args[])
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if (e.button.button == SDL_BUTTON_LEFT)
-					pause = !pause;
+				{
+					if (newballspeed)
+						newballspeed = false;
+					else
+						pause = !pause;
+				}
 				else if (pause && e.button.button == SDL_BUTTON_RIGHT)
 				{
+					if (newballspeed)
+					{
+						Ball newballp = balls.back();
+						newballp.v = (Vector(e.button.x, e.button.y) - newballp.r) / 2000;
+						balls.pop_back();
+						balls.push_back(newballp);
+						energy += newballp.Energy();
+						newballspeed = false;
+						break;
+					}
+					if (balls.size() >= maxNumberOfBalls)
+					{
+						cout << clock() << endl << "Sorry, you've reached the maximum number of balls!" << endl;
+						break;
+					}
 					double start = clock();
 					newball = Ball(e.button.x, e.button.y, 5, windowWidth, windowHeight, 0, 0, &speed);
 					if (DrawNewBall())
@@ -77,12 +100,16 @@ int main(int argc, char* args[])
 							if ((clock() - start) > 100)
 							{
 								start = clock();
-								newball.radius = newball.radius > 39 ? 40 : newball.radius + 1;
-								if(!DrawNewBall()) break;
+								newball.radius = newball.radius > maxBallSize ? maxBallSize : newball.radius + 1;
+								if (!DrawNewBall()) break;
 							}
 							SDL_PollEvent(&e);
 						}
-						if(DrawNewBall()) balls.push_back(newball);
+						if (e.type == SDL_MOUSEBUTTONUP)
+						{
+							balls.push_back(newball);
+							newballspeed = true;
+						}
 					}
 				}
 				break;
@@ -100,7 +127,7 @@ int main(int argc, char* args[])
 			energy2 += (*ball).Energy();
 		}
 		if (energy2 > energy*1.1)
-			cout << "Energy accumulation";
+			cout << endl << "Energy accumulation" << endl;
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_RenderClear(renderer);
 		DrawBalls();
@@ -112,6 +139,15 @@ int main(int argc, char* args[])
 
 void Setup()
 {
+	ifstream settings;
+	settings.open("settings.txt");
+	string temp;
+	getline(settings, temp);
+	windowWidth = stoi(temp);
+	getline(settings, temp);
+	windowHeight = stoi(temp);
+	getline(settings, temp);
+	maxNumberOfBalls = stoi(temp);
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_CreateWindowAndRenderer(windowWidth, windowHeight, SDL_WINDOW_SHOWN, &window, &renderer);
 	quit = false;

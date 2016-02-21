@@ -1,7 +1,7 @@
 #pragma once
 #include "Vector.h"
-//for now it's wall, really
 class Ball;
+//for now it's wall, really
 class Line
 {
 public:

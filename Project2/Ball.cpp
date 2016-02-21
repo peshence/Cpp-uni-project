@@ -24,8 +24,6 @@ Ball::Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy,
 	this->r.x = x;
 	this->r.y = y;
 	this->radius = r;
-	this->windowSizex = wsx;
-	this->windowSizey = wsy;
 	this->v.x = vx;
 	this->v.y = vy;
 	c1 = rand() % 255;
@@ -48,7 +46,6 @@ void Ball::Move(list<Ball>* balls, list<Line> *walls)
 {
 	movement = v**speed;
 	FirstCollision(balls, walls);
-
 }
 
 
@@ -99,8 +96,11 @@ void Ball::FirstCollision(list<Ball>* balls, list<Line>* walls)
 	Line* firstWall = NULL;
 	for (list<Line>::iterator wall = walls->begin(); wall != walls->end(); wall++)
 	{
+		if ((*wall - r - movement).Length() < radius)
+			cout << "break";
 		double pathToCollision = wall->PathToCollision(*this);
 		if (pathToCollision > 0 && pathToCollision <= movement.Length() && (firstBall == NULL || pathToCollision < displacementAlongMovement))
+		//if (abs(pathToCollision) > 0 && abs(pathToCollision) <= movement.Length() && (firstBall == NULL || pathToCollision < displacementAlongMovement))
 		{
 			firstWall = &*wall;
 			displacementAlongMovement = pathToCollision;

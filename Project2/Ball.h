@@ -6,10 +6,12 @@
 using namespace std;
 class Ball
 {
-	friend class Line;
+	//friend class Line;
+
 public:
 	Vector r = Vector(0);
 	double radius;
+	Vector v = Vector(0);
 	Ball();
 	Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed);
 	~Ball();
@@ -27,12 +29,8 @@ public:
 	static bool CollideWithWall(double *x_i, double r, double *v_i, double windowSizei);
 	double* speed;
 	Vector movement = Vector(0);
+
 private:
-	Vector v = Vector(0);
-
-	int windowSizex = 640;
-	int windowSizey = 480;
-
 	int c1;
 	int c1Amp;
 	int c2;
