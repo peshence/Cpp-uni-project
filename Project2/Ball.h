@@ -6,8 +6,6 @@
 using namespace std;
 class Ball
 {
-	//friend class Line;
-
 public:
 	Vector r = Vector(0);
 	double radius;
@@ -16,17 +14,12 @@ public:
 	Ball(double x, double y, double r, int wsx, int wsy, double vx, double vy, double* speed);
 	~Ball();
 	void Move(list<Ball> *balls, list<Line> *walls);
-	void Render(SDL_Renderer* renderer);// { Render(x, y, r, renderer); }
-	//void FirstCollision(list<Ball> *balls);
+	void Render(SDL_Renderer* renderer);
 	void FirstCollision(list<Ball> *balls, list<Line> *walls);
 	void Collide(Ball *ball);
 	void CollideWithWall(Line wall, double movementToCollision);
-	/*void CollideWithWall();*/
 	int Mass();
 	double Energy();
-	//static void Render(double x, double y, double r, SDL_Renderer* renderer);
-	static void Collide(Ball* movingBall, Ball* stationaryBall);
-	static bool CollideWithWall(double *x_i, double r, double *v_i, double windowSizei);
 	double* speed;
 	Vector movement = Vector(0);
 

@@ -170,21 +170,7 @@ void MoveBalls()
 	for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
 	{
 		(*ball).Move(&balls, &walls);
-		/*for (list<Ball>::iterator ball2 = ball; ball2 != balls.end(); ball2++)
-		{
-			if (ball != ball2)
-				Ball::Collide(&(*ball), &(*ball2));
-		}*/
 	}
-	//for (list<Ball>::iterator ball = balls.begin(); ball != balls.end(); ball++)
-	//{
-	//	(*ball).FirstCollision(&balls);
-	//	/*for (list<Ball>::iterator ball2 = ball; ball2 != balls.end(); ball2++)
-	//	{
-	//	if (ball != ball2)
-	//	Ball::Collide(&(*ball), &(*ball2));
-	//	}*/
-	//}
 }
 
 bool DrawNewBall()
@@ -213,13 +199,4 @@ bool DrawNewBall()
 	SDL_RenderPresent(renderer);
 	return true;
 }
-
-//int move(int xi, int *vi, int rectSizei, int windowSizei)
-//{
-//	xi += *vi;
-//	int temp = xi + rectSizei*((*vi) + abs(*vi)) / (2 * abs(*vi));
-//	if (temp >= windowSizei || temp <= 0)
-//		*vi = -*vi;
-//	return xi;
-//}
 
