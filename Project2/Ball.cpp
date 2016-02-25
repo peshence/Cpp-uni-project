@@ -96,8 +96,8 @@ void Ball::FirstCollision(list<Ball>* balls, list<Line>* walls)
 	Line* firstWall = NULL;
 	for (list<Line>::iterator wall = walls->begin(); wall != walls->end(); wall++)
 	{
-		if ((*wall - r - movement).Length() < radius)
-			cout << "break";
+		/*if ((*wall - r - movement).Length() < radius)
+			cout << "break";*/
 		double pathToCollision = wall->PathToCollision(*this);
 		if (pathToCollision > 0 && pathToCollision <= movement.Length() && (firstBall == NULL || pathToCollision < displacementAlongMovement))
 		{

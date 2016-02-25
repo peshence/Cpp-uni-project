@@ -43,8 +43,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Settings.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
+    <Text Include="Settings.txt" />
   </ItemGroup>
 </Project>
